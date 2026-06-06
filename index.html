@@ -9,7 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="HostelBot">
 <title>HostelBot — Costa del Sol</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:#080808;color:#E8E3DB;overflow-x:hidden}
@@ -380,11 +382,49 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
   .calc-grid{grid-template-columns:1fr}
   .calc-result-grid{grid-template-columns:1fr}
 }
+
+/* ── AUTH GATE ── */
+#auth-gate{position:fixed;inset:0;z-index:600;background:#080808;display:none;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem}
+#auth-gate.visible{display:flex}
+.auth-card{width:100%;max-width:340px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:0}
+.auth-logo{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:var(--text);margin-top:1rem;letter-spacing:.5px}
+.auth-logo em{font-style:normal;color:var(--champ)}
+.auth-sub{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:6px;margin-bottom:1.75rem}
+.auth-field{width:100%;text-align:left;margin-bottom:10px}
+.auth-field label{display:block;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--hint);margin-bottom:6px}
+.auth-field input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:11px 13px;font-size:14px;color:var(--text);font-family:'Instrument Sans',sans-serif;outline:none;transition:border-color .15s}
+.auth-field input:focus{border-color:var(--champ-line)}
+.btn-auth{width:100%;margin-top:6px;background:var(--champ);color:#0a0a08;border:none;border-radius:6px;padding:12px;font-size:14px;font-weight:600;font-family:'Instrument Sans',sans-serif;cursor:pointer;letter-spacing:.3px;transition:filter .15s}
+.btn-auth:hover{filter:brightness(1.06)}
+.btn-auth:disabled{opacity:.5;cursor:not-allowed}
+.auth-msg{font-family:'DM Mono',monospace;font-size:11px;margin-top:12px;min-height:16px;color:var(--red)}
+.btn-logout{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.5px;padding:6px 11px;cursor:pointer;transition:all .15s;text-transform:uppercase}
+.btn-logout:hover{border-color:var(--border2);color:var(--text)}
+
+/* ── MAP PICKER ── */
+#picker-map{width:100%;height:360px;border-radius:8px;overflow:hidden;background:var(--bg3);border:1px solid var(--border)}
+.leaflet-container{background:#0F0F0E!important;font-family:'Instrument Sans',sans-serif}
+.picker-info{margin-top:12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 13px;font-size:13px;color:var(--muted)}
+.picker-info strong{color:var(--champ);font-weight:500}
+.btn-map-zona{background:transparent;border:1px solid var(--champ-line);color:var(--champ);border-radius:4px}
+.btn-map-zona:hover{background:rgba(240,217,168,.08)}
 </style>
 </head>
 <body>
 
-<div id="modo-escritorio">
+<div id="auth-gate" class="visible">
+  <div class="auth-card">
+    <span class="bot-chip lg" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g class="bot-sig" stroke="currentColor" fill="none" stroke-linecap="round"><path d="M18 7a8.5 8.5 0 0 1 12 0" stroke-width="1.5" opacity=".5"/><path d="M21 10a4.5 4.5 0 0 1 6 0" stroke-width="1.5" opacity=".8"/></g><line x1="24" y1="12" x2="24" y2="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="10.5" r="2.2" fill="currentColor"/><rect x="9" y="16" width="30" height="24" rx="8" stroke="currentColor" stroke-width="2.2"/><rect x="4.5" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><rect x="39.9" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><g class="bot-eyes" fill="currentColor"><circle cx="18.5" cy="26.5" r="2.5"/><circle cx="29.5" cy="26.5" r="2.5"/></g><path d="M18 33q6 4 12 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></span>
+    <div class="auth-logo">hostel<em>bot</em></div>
+    <div class="auth-sub">Acceso privado</div>
+    <div class="auth-field"><label>Correo</label><input type="email" id="auth-email" autocomplete="username" placeholder="tu@correo.com"></div>
+    <div class="auth-field"><label>Contraseña</label><input type="password" id="auth-pass" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')hacerLogin()"></div>
+    <button class="btn-auth" id="btn-auth" onclick="hacerLogin()">Entrar</button>
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
+<div id="modo-escritorio" style="display:none">
   <div class="topbar">
     <div class="logo-lockup">
       <span class="bot-chip" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g class="bot-sig" stroke="currentColor" fill="none" stroke-linecap="round"><path d="M18 7a8.5 8.5 0 0 1 12 0" stroke-width="1.5" opacity=".5"/><path d="M21 10a4.5 4.5 0 0 1 6 0" stroke-width="1.5" opacity=".8"/></g><line x1="24" y1="12" x2="24" y2="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="10.5" r="2.2" fill="currentColor"/><rect x="9" y="16" width="30" height="24" rx="8" stroke="currentColor" stroke-width="2.2"/><rect x="4.5" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><rect x="39.9" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><g class="bot-eyes" fill="currentColor"><circle cx="18.5" cy="26.5" r="2.5"/><circle cx="29.5" cy="26.5" r="2.5"/></g><path d="M18 33q6 4 12 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></span>
@@ -393,6 +433,7 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     <div class="topbar-right">
       <div class="sync-pill"><div class="dot" id="sync-dot"></div><span id="sync-lbl">Conectando</span></div>
       <button class="btn-pres-top" onclick="abrirPresentacion()">▶ Presentar cliente</button>
+      <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
     </div>
   </div>
 
@@ -425,6 +466,7 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" id="btn-buscar" onclick="buscar()">Buscar negocios</button>
+        <button class="btn btn-map-zona" onclick="abrirMapaPicker()">📍 Elegir zona en el mapa</button>
         <button class="btn btn-ghost" onclick="cargarDemo()">Modo demo</button>
       </div>
       <div class="msg" id="msg-buscar"></div>
@@ -649,6 +691,33 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-mapa">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div><div class="modal-titulo">📍 Elegir zona en el mapa</div><div class="modal-sub">Pulsa en el mapa para fijar la zona de búsqueda</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="cerrarModal('modal-mapa')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="picker-map"></div>
+      <div class="picker-info">Zona seleccionada: <strong id="picker-zona">— pulsa en el mapa —</strong></div>
+      <div class="det-field" style="margin-top:12px"><label>Tipo de negocio</label>
+        <select id="picker-tipo">
+          <option value="restaurante">Restaurantes</option>
+          <option value="bar tapas">Bares de tapas</option>
+          <option value="hotel">Hoteles</option>
+          <option value="chiringuito">Chiringuitos</option>
+          <option value="cafeteria">Cafeterías</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-picker-buscar" onclick="buscarDesdeMapa()" disabled>Buscar negocios aquí</button>
+        <button class="btn btn-ghost" onclick="cerrarModal('modal-mapa')">Cancelar</button>
+      </div>
+      <div class="msg" id="msg-picker"></div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-visita">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
@@ -763,8 +832,53 @@ const AI_PROXY = SB_URL + '/functions/v1/ai-proxy';
 let negocios = [], filtroE = 'todos', filtroO = 'todos', negActual = null;
 let tabActual = 'buscar', slideActual = 0, totalSlides = 8, touchX0 = 0;
 
-// ── INIT ──
+// ── AUTH ──
+let appArrancada = false;
+
 async function init() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) mostrarApp(); else mostrarLogin();
+  } catch(e) { mostrarLogin(); }
+  sb.auth.onAuthStateChange((_evt, session) => {
+    if (session) mostrarApp(); else mostrarLogin();
+  });
+}
+
+function mostrarLogin() {
+  document.getElementById('auth-gate').classList.add('visible');
+  document.getElementById('modo-escritorio').style.display = 'none';
+}
+
+function mostrarApp() {
+  document.getElementById('auth-gate').classList.remove('visible');
+  document.getElementById('modo-escritorio').style.display = '';
+  arrancarApp();
+}
+
+async function hacerLogin() {
+  const email = document.getElementById('auth-email').value.trim();
+  const pass = document.getElementById('auth-pass').value;
+  const msg = document.getElementById('auth-msg');
+  const btn = document.getElementById('btn-auth');
+  msg.textContent = '';
+  if (!email || !pass) { msg.textContent = 'Escribe tu correo y contraseña.'; return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) { msg.textContent = 'Correo o contraseña incorrectos.'; }
+  } catch(e) { msg.textContent = 'No se pudo conectar. Inténtalo de nuevo.'; }
+  finally { btn.disabled = false; btn.textContent = 'Entrar'; }
+}
+
+async function cerrarSesion() {
+  try { await sb.auth.signOut(); } catch(e) {}
+  document.getElementById('auth-pass').value = '';
+}
+
+async function arrancarApp() {
+  if (appArrancada) return;
+  appArrancada = true;
   try {
     const { error } = await sb.from('negocios').select('id', { count: 'exact', head: true });
     if (error) throw error;
@@ -1529,6 +1643,62 @@ function mostrarMsg(el,tipo,txt){el.className='msg '+tipo;el.textContent=txt;el.
 function cerrarModal(id){document.getElementById(id).classList.remove('visible');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('visible');}));
 document.addEventListener('keydown',e=>{if(document.getElementById('modo-pres').classList.contains('visible')){if(e.key==='ArrowRight')irSlide(1);if(e.key==='ArrowLeft')irSlide(-1);}});
+
+// ── MAPA: ELEGIR ZONA ──
+let pickerMap = null, pickerDot = null, pickerCircle = null, pickerZona = '';
+
+function abrirMapaPicker() {
+  document.getElementById('modal-mapa').classList.add('visible');
+  document.getElementById('msg-picker').style.display = 'none';
+  setTimeout(initPickerMap, 180);
+}
+
+function initPickerMap() {
+  const msg = document.getElementById('msg-picker');
+  if (typeof L === 'undefined') { mostrarMsg(msg, 'error', 'No se pudo cargar el mapa. Revisa tu conexión.'); return; }
+  if (!pickerMap) {
+    pickerMap = L.map('picker-map', { attributionControl: true }).setView([36.509, -4.886], 12);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap · © CARTO'
+    }).addTo(pickerMap);
+    pickerMap.on('click', onPickerClick);
+  }
+  setTimeout(() => pickerMap.invalidateSize(), 60);
+}
+
+async function onPickerClick(e) {
+  const lat = e.latlng.lat, lng = e.latlng.lng;
+  if (pickerDot) pickerDot.setLatLng(e.latlng);
+  else pickerDot = L.circleMarker(e.latlng, { radius: 8, color: '#F0D9A8', weight: 2, fillColor: '#B8965A', fillOpacity: .7 }).addTo(pickerMap);
+  if (pickerCircle) pickerCircle.setLatLng(e.latlng);
+  else pickerCircle = L.circle(e.latlng, { radius: 700, color: '#F0D9A8', weight: 1, fillColor: '#F0D9A8', fillOpacity: .06 }).addTo(pickerMap);
+  document.getElementById('picker-zona').textContent = 'Buscando nombre de la zona...';
+  document.getElementById('btn-picker-buscar').disabled = true;
+  pickerZona = await reverseGeocode(lat, lng);
+  document.getElementById('picker-zona').textContent = pickerZona;
+  document.getElementById('btn-picker-buscar').disabled = false;
+}
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const r = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&addressdetails=1&lat=' + lat + '&lon=' + lng, { headers: { 'Accept-Language': 'es' } });
+    const d = await r.json();
+    const a = d.address || {};
+    const sub = a.suburb || a.neighbourhood || a.quarter || a.city_district || a.hamlet || '';
+    const city = a.city || a.town || a.village || a.municipality || a.county || '';
+    const z = [sub, city].filter(Boolean).join(', ');
+    return z || d.name || 'Zona seleccionada';
+  } catch(e) { return 'Zona seleccionada'; }
+}
+
+function buscarDesdeMapa() {
+  if (!pickerZona) return;
+  document.getElementById('zona').value = pickerZona;
+  document.getElementById('tipo').value = document.getElementById('picker-tipo').value;
+  cerrarModal('modal-mapa');
+  buscar();
+}
 
 init();
 </script>
