@@ -514,8 +514,8 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     <div id="lista-negocios"><div class="loading visible" id="load-neg"><div class="spinner"></div>Cargando...</div></div>
   </div>
 
-  <!-- TAB NEGOCIOS (redirige a buscar) -->
-  <div id="tab-negocios" class="main" style="display:none">
+  <!-- TAB NEGOCIOS (reutiliza la vista Buscar, donde vive la lista) -->
+  <div id="tab-negocios" class="main" style="display:none"></div>
 
   <!-- TAB PLANES -->
   <div id="tab-planes" class="main" style="display:none">
@@ -602,6 +602,19 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
       <div class="radar-grid" id="radar-grid">
         <div class="empty" style="grid-column:1/-1"><div class="empty-bot"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g class="bot-sig" stroke="currentColor" fill="none" stroke-linecap="round"><path d="M18 7a8.5 8.5 0 0 1 12 0" stroke-width="1.5" opacity=".5"/><path d="M21 10a4.5 4.5 0 0 1 6 0" stroke-width="1.5" opacity=".8"/></g><line x1="24" y1="12" x2="24" y2="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="10.5" r="2.2" fill="currentColor"/><rect x="9" y="16" width="30" height="24" rx="8" stroke="currentColor" stroke-width="2.2"/><rect x="4.5" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><rect x="39.9" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><g class="bot-eyes" fill="currentColor"><circle cx="18.5" cy="26.5" r="2.5"/><circle cx="29.5" cy="26.5" r="2.5"/></g><path d="M18 33q6 4 12 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div><div class="empty-title">Sin zonas todavía</div></div>
       </div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
+        <div class="panel-title" style="margin-bottom:0">Argumentos que funcionan</div>
+        <button class="btn btn-primary btn-sm" onclick="abrirNuevoArgumento()">+ Añadir argumento</button>
+      </div>
+      <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.5px;color:var(--muted);margin-bottom:1rem;text-transform:uppercase">Tu biblioteca de frases de venta. Guarda lo que funcionó al cerrar cada cliente.</p>
+      <div id="panel-top-args" style="display:none;margin-bottom:1.25rem">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:10px">🏆 Tus mejores argumentos</div>
+        <div id="top-argumentos"></div>
+      </div>
+      <div id="lista-argumentos"></div>
     </div>
   </div>
 
@@ -746,6 +759,42 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
   </div>
 </div>
 
+<!-- ══ AÑADIR ARGUMENTO ══ -->
+<div class="modal-overlay" id="modal-arg">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div><div class="modal-titulo">💬 Argumento de venta</div><div class="modal-sub">Lo que funcionó (o no) en una visita</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="cerrarModal('modal-arg')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="det-field full" style="margin-bottom:10px"><label>Argumento / frase</label><textarea id="arg-texto" placeholder="Ej: Les enseñé cuánto dinero pierden al mes por su nota baja en Google y se convencieron..." style="min-height:80px"></textarea></div>
+      <div class="det-grid">
+        <div class="det-field"><label>Tipo de negocio</label>
+          <select id="arg-tipo">
+            <option value="restaurante">Restaurante</option>
+            <option value="bar">Bar de tapas</option>
+            <option value="hotel">Hotel</option>
+            <option value="chiringuito">Chiringuito</option>
+            <option value="cafeteria">Cafetería</option>
+          </select>
+        </div>
+        <div class="det-field"><label>Resultado</label>
+          <select id="arg-resultado">
+            <option value="cerrado">✅ Cerró cliente</option>
+            <option value="interes">🤔 Mostró interés</option>
+            <option value="no">❌ No funcionó</option>
+          </select>
+        </div>
+        <div class="det-field full"><label>Objeción que pusieron (opcional)</label><input type="text" id="arg-objecion" placeholder="Ej: 'es muy caro', 'ya tengo a alguien'..."></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="guardarArgumento()">💾 Guardar argumento</button>
+      </div>
+      <div class="msg" id="msg-arg"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODO PRESENTACIÓN ══ -->
 <div id="modo-pres">
   <button class="btn-salir-pres" onclick="salirPresentacion()">✕ Salir</button>
@@ -886,13 +935,15 @@ function setSyncOK(ok) {
 function cambiarTab(tab, btn) {
   tabActual = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
+  // La pestaña "Negocios" reutiliza la vista Buscar (ahí está la lista)
+  const visible = tab === 'negocios' ? 'buscar' : tab;
   ['buscar','negocios','planes','radar','calc'].forEach(t => {
     const el = document.getElementById('tab-' + t);
-    if (el) el.style.display = t === tab ? '' : 'none';
+    if (el) el.style.display = t === visible ? '' : 'none';
   });
   if (tab === 'buscar' || tab === 'negocios') renderNegocios();
-  if (tab === 'radar') renderRadar();
+  if (tab === 'radar') { renderRadar(); renderArgumentos(); }
 }
 
 // ── SCORING ──
@@ -934,11 +985,11 @@ async function cargarNegocios() {
     negocios = data || [];
     cargarVisto();
     actualizarStats();
-    document.getElementById('load-neg').classList.remove('visible');
+    document.getElementById('load-neg')?.classList.remove('visible');
     renderNegocios();
     actualizarFiltroZonas();
     cargarListaPresentacion();
-  } catch(e) { document.getElementById('load-neg').classList.remove('visible'); }
+  } catch(e) { document.getElementById('load-neg')?.classList.remove('visible'); }
 }
 
 // ── BUSCAR ──
@@ -1307,7 +1358,8 @@ function irAZona(z) {
 
 // ── HOY ──
 function renderHoy() {
-  const hoy=new Date().toISOString().slice(0,10), el=document.getElementById('lista-hoy');
+  const el=document.getElementById('lista-hoy'); if(!el) return;
+  const hoy=new Date().toISOString().slice(0,10);
   const v=negocios.filter(n=>n.recordatorio_fecha&&n.recordatorio_fecha<=hoy&&n.estado!=='cliente'&&n.estado!=='descartado');
   if (!v.length) { el.innerHTML='<div class="empty"><div class="empty-bot"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g class="bot-sig" stroke="currentColor" fill="none" stroke-linecap="round"><path d="M18 7a8.5 8.5 0 0 1 12 0" stroke-width="1.5" opacity=".5"/><path d="M21 10a4.5 4.5 0 0 1 6 0" stroke-width="1.5" opacity=".8"/></g><line x1="24" y1="12" x2="24" y2="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="10.5" r="2.2" fill="currentColor"/><rect x="9" y="16" width="30" height="24" rx="8" stroke="currentColor" stroke-width="2.2"/><rect x="4.5" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><rect x="39.9" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><g class="bot-eyes" fill="currentColor"><circle cx="18.5" cy="26.5" r="2.5"/><circle cx="29.5" cy="26.5" r="2.5"/></g><path d="M18 33q6 4 12 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div><div class="empty-title">Sin visitas para hoy</div></div>'; return; }
   el.innerHTML = v.map((n,i)=>card(n,i,false,false)).join('');
@@ -1918,5 +1970,6 @@ function buscarDesdeMapa() {
 
 init();
 </script>
+</div>
 </body>
 </html>
