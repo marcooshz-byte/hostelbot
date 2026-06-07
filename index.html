@@ -1233,7 +1233,7 @@ async function generarGuion() {
 }
 
 function irAPresentacionDesdeDetalle() { if (!negActual) return; cerrarModal('modal-det'); generarPresentacionIA(negActual); }
-function irAPresentacion(id) { const n = negocios.find(x=>x.id===id); if (n) generarPresentacionIA(n); }
+function irAPresentacion(id) { const n = negocios.find(x=>x.id===id); if (n) { document.getElementById('modo-pres').classList.add('visible'); document.getElementById('pres-selector').classList.add('hidden'); generarPresentacionIA(n); } }
 
 // ── KIT ──
 async function abrirKit(placeId) {
