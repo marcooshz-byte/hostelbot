@@ -442,16 +442,13 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     <button class="tab" onclick="cambiarTab('negocios',this)">🏪 Negocios</button>
     <button class="tab" onclick="cambiarTab('planes',this)">💼 Planes</button>
     <button class="tab" onclick="cambiarTab('radar',this)">📡 Radar</button>
-    <button class="tab" onclick="cambiarTab('hoy',this)">📅 Hoy</button>
     <button class="tab" onclick="cambiarTab('calc',this)">🧮 Calculadora</button>
-    <button class="tab" onclick="cambiarTab('mapa',this)">🗺️ Mapa</button>
-    <button class="tab" onclick="cambiarTab('argumentos',this)">💡 Argumentos</button>
   </div>
 
   <!-- TAB BUSCAR -->
   <div id="tab-buscar" class="main">
     <div class="panel">
-      <div class="panel-title">Nueva búsqueda</div>
+      <div class="panel-title">🔍 Buscar negocios</div>
       <div class="grid-2">
         <div class="field"><label>Zona</label><input type="text" id="zona" placeholder="Marbella centro, Puerto Banús..." value="Marbella"></div>
         <div class="field"><label>Tipo de negocio</label>
@@ -472,13 +469,21 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
       <div class="msg" id="msg-buscar"></div>
     </div>
     <div class="loading" id="loading-buscar"><div class="spinner"></div><span id="loading-txt">Buscando...</span></div>
-    <div id="lista-busqueda">
-      <div class="empty"><div class="empty-bot"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g class="bot-sig" stroke="currentColor" fill="none" stroke-linecap="round"><path d="M18 7a8.5 8.5 0 0 1 12 0" stroke-width="1.5" opacity=".5"/><path d="M21 10a4.5 4.5 0 0 1 6 0" stroke-width="1.5" opacity=".8"/></g><line x1="24" y1="12" x2="24" y2="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="10.5" r="2.2" fill="currentColor"/><rect x="9" y="16" width="30" height="24" rx="8" stroke="currentColor" stroke-width="2.2"/><rect x="4.5" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><rect x="39.9" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><g class="bot-eyes" fill="currentColor"><circle cx="18.5" cy="26.5" r="2.5"/><circle cx="29.5" cy="26.5" r="2.5"/></g><path d="M18 33q6 4 12 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div><div class="empty-title">Introduce una zona y pulsa Buscar</div><div class="empty-sub">Los nuevos negocios se guardan automáticamente</div></div>
-    </div>
-  </div>
 
-  <!-- TAB NEGOCIOS -->
-  <div id="tab-negocios" class="main" style="display:none">
+    <!-- RESULTADOS NUEVOS -->
+    <div id="resultados-busqueda" style="display:none">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding:0 2px">Resultados nuevos encontrados</div>
+      <div id="lista-busqueda"></div>
+    </div>
+
+    <!-- SEPARADOR -->
+    <div style="display:flex;align-items:center;gap:12px;margin:1.25rem 0" id="sep-negocios">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--hint)" id="sep-label">Mis negocios</div>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+
+    <!-- STATS -->
     <div class="stats-grid">
       <div class="stat-card" onclick="filtrarE('todos')"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total</div></div>
       <div class="stat-card" onclick="filtrarE('pendiente')"><div class="stat-val" style="color:var(--muted)" id="s-pend">—</div><div class="stat-lbl">Pendientes</div></div>
@@ -486,14 +491,31 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
       <div class="stat-card" onclick="filtrarE('cliente')"><div class="stat-val" style="color:var(--green)" id="s-cli">—</div><div class="stat-lbl">Clientes</div></div>
       <div class="stat-card" onclick="filtrarE('descartado')"><div class="stat-val" style="color:var(--hint)" id="s-desc">—</div><div class="stat-lbl">Descartados</div></div>
     </div>
-    <div class="filtros">
-      <button class="filtro active" onclick="filtrarO('todos',this)">Todos</button>
-      <button class="filtro" onclick="filtrarO('alta',this)">Alta oportunidad</button>
-      <button class="filtro" onclick="filtrarO('media',this)">Media</button>
-      <button class="filtro" onclick="filtrarO('baja',this)">Optimizados</button>
+
+    <!-- FILTROS -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
+      <div class="filtros" style="flex:1;margin-bottom:0">
+        <button class="filtro active" onclick="filtrarE('todos',this)">Todos</button>
+        <button class="filtro" onclick="filtrarE('pendiente',this)">Pendientes</button>
+        <button class="filtro" onclick="filtrarE('visitado',this)">Visitados</button>
+        <button class="filtro" onclick="filtrarE('cliente',this)">Clientes</button>
+      </div>
+      <select id="filtro-zona" onchange="filtrarZona(this.value)" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:4px 10px;font-size:11px;color:var(--text);font-family:'DM Mono',monospace;letter-spacing:.5px">
+        <option value="todas">📍 Todas las zonas</option>
+      </select>
+      <select id="filtro-orden" onchange="filtrarOrden(this.value)" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:4px 10px;font-size:11px;color:var(--text);font-family:'DM Mono',monospace;letter-spacing:.5px">
+        <option value="score">🎯 Por prioridad</option>
+        <option value="sin_ver">👁️ Sin ver primero</option>
+        <option value="nombre">🔤 Por nombre</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="exportarDatos()" style="white-space:nowrap">⬇️ Exportar</button>
     </div>
+
     <div id="lista-negocios"><div class="loading visible" id="load-neg"><div class="spinner"></div>Cargando...</div></div>
   </div>
+
+  <!-- TAB NEGOCIOS (redirige a buscar) -->
+  <div id="tab-negocios" class="main" style="display:none">
 
   <!-- TAB PLANES -->
   <div id="tab-planes" class="main" style="display:none">
@@ -583,16 +605,6 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     </div>
   </div>
 
-  <!-- TAB HOY -->
-  <div id="tab-hoy" class="main" style="display:none">
-    <div class="panel">
-      <div class="panel-title">Visitas de hoy</div>
-      <div class="btn-row" style="margin-bottom:1rem"><button class="btn btn-ghost btn-sm" onclick="exportarPDF()">↓ Exportar PDF</button></div>
-      <div id="lista-hoy"><div class="empty"><div class="empty-bot"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g class="bot-sig" stroke="currentColor" fill="none" stroke-linecap="round"><path d="M18 7a8.5 8.5 0 0 1 12 0" stroke-width="1.5" opacity=".5"/><path d="M21 10a4.5 4.5 0 0 1 6 0" stroke-width="1.5" opacity=".8"/></g><line x1="24" y1="12" x2="24" y2="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="10.5" r="2.2" fill="currentColor"/><rect x="9" y="16" width="30" height="24" rx="8" stroke="currentColor" stroke-width="2.2"/><rect x="4.5" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><rect x="39.9" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><g class="bot-eyes" fill="currentColor"><circle cx="18.5" cy="26.5" r="2.5"/><circle cx="29.5" cy="26.5" r="2.5"/></g><path d="M18 33q6 4 12 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div><div class="empty-title">Sin visitas programadas</div></div></div>
-    </div>
-  </div>
-</div>
-
   <!-- TAB CALCULADORA -->
   <div id="tab-calc" class="main" style="display:none">
     <div class="panel">
@@ -630,66 +642,6 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
       </div>
     </div>
   </div>
-  <!-- TAB MAPA -->
-  <div id="tab-mapa" class="main" style="display:none">
-    <div class="panel">
-      <div class="panel-title">🗺️ Mapa de negocios</div>
-      <div id="mapa-google" style="width:100%;height:480px;border-radius:8px;overflow:hidden;background:var(--bg3)"></div>
-      <div style="margin-top:1rem;display:flex;gap:12px;flex-wrap:wrap">
-        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#C0392B;display:inline-block"></span>Alta oportunidad</span>
-        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#C48A1A;display:inline-block"></span>Media</span>
-        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#3D9970;display:inline-block"></span>Cliente / Optimizado</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- TAB ARGUMENTOS -->
-  <div id="tab-argumentos" class="main" style="display:none">
-    <div class="panel">
-      <div class="panel-title">💡 Argumentos ganadores</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:1.25rem;line-height:1.6">Anota qué argumentos funcionaron al cerrar clientes. La app te los sugiere en visitas similares.</p>
-      <div class="btn-row" style="margin-bottom:1.25rem"><button class="btn btn-primary" onclick="abrirNuevoArgumento()">➕ Añadir argumento</button></div>
-      <div id="lista-argumentos"><div class="empty"><div class="empty-bot"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g class="bot-sig" stroke="currentColor" fill="none" stroke-linecap="round"><path d="M18 7a8.5 8.5 0 0 1 12 0" stroke-width="1.5" opacity=".5"/><path d="M21 10a4.5 4.5 0 0 1 6 0" stroke-width="1.5" opacity=".8"/></g><line x1="24" y1="12" x2="24" y2="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="10.5" r="2.2" fill="currentColor"/><rect x="9" y="16" width="30" height="24" rx="8" stroke="currentColor" stroke-width="2.2"/><rect x="4.5" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><rect x="39.9" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><g class="bot-eyes" fill="currentColor"><circle cx="18.5" cy="26.5" r="2.5"/><circle cx="29.5" cy="26.5" r="2.5"/></g><path d="M18 33q6 4 12 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div><div class="empty-title">Sin argumentos todavía</div><div class="empty-sub">Añade el primero después de tu primera visita</div></div></div>
-    </div>
-    <div class="panel" id="panel-top-args" style="display:none">
-      <div class="panel-title">🏆 Más efectivos por tipo</div>
-      <div id="top-argumentos"></div>
-    </div>
-  </div>
-
-<div class="modal-overlay" id="modal-arg">
-  <div class="modal">
-    <div class="modal-header">
-      <div><div class="modal-titulo">💡 Nuevo argumento</div><div class="modal-sub">¿Qué funcionó para cerrar?</div></div>
-      <button class="btn btn-ghost btn-sm" onclick="cerrarModal('modal-arg')">Cerrar</button>
-    </div>
-    <div class="modal-body">
-      <div class="det-grid">
-        <div class="det-field full"><label>El argumento que usaste</label><textarea id="arg-texto" placeholder="Ej: Le enseñé cuántos clientes pierde al mes por su nota de 3.2★. Cuando vio el número, se convenció."></textarea></div>
-        <div class="det-field"><label>Tipo de negocio</label>
-          <select id="arg-tipo">
-            <option value="restaurante">🍽️ Restaurante</option>
-            <option value="bar">🍺 Bar / Tapas</option>
-            <option value="hotel">🏨 Hotel</option>
-            <option value="chiringuito">🏖️ Chiringuito</option>
-            <option value="cafeteria">☕ Cafetería</option>
-            <option value="otro">📌 Otro</option>
-          </select>
-        </div>
-        <div class="det-field"><label>¿Cerró el cliente?</label>
-          <select id="arg-resultado">
-            <option value="cerrado">✅ Sí, cerrado</option>
-            <option value="interes">🤔 Con interés</option>
-            <option value="no">❌ No funcionó</option>
-          </select>
-        </div>
-        <div class="det-field full"><label>Objeción que tenía (opcional)</label><input type="text" id="arg-objecion" placeholder="Ej: Que era caro, que ya tenía alguien..."></div>
-      </div>
-      <div class="btn-row"><button class="btn btn-primary" onclick="guardarArgumento()">💾 Guardar</button></div>
-      <div class="msg" id="msg-arg"></div>
-    </div>
-  </div>
-</div>
 
 <div class="modal-overlay" id="modal-mapa">
   <div class="modal" style="max-width:680px">
@@ -700,6 +652,14 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     <div class="modal-body">
       <div id="picker-map"></div>
       <div class="picker-info">Zona seleccionada: <strong id="picker-zona">— pulsa en el mapa —</strong></div>
+      <div style="margin-top:12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:12px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--hint)">Radio de búsqueda</label>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--gold);font-weight:500" id="radio-label">700 m</span>
+        </div>
+        <input type="range" id="picker-radio" min="200" max="5000" step="100" value="700" style="width:100%" oninput="actualizarRadio(this.value)">
+        <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:9px;color:var(--hint);margin-top:4px"><span>200m</span><span>1km</span><span>2.5km</span><span>5km</span></div>
+      </div>
       <div class="det-field" style="margin-top:12px"><label>Tipo de negocio</label>
         <select id="picker-tipo">
           <option value="restaurante">Restaurantes</option>
@@ -858,7 +818,8 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 const AI_PROXY = SB_URL + '/functions/v1/ai-proxy';
 
 // ── ESTADO ──
-let negocios = [], filtroE = 'todos', filtroO = 'todos', negActual = null;
+let negocios = [], filtroE = 'todos', filtroO = 'todos', filtroZona = 'todas', filtroOrden = 'score', negActual = null;
+let notasDebounce = {};
 let tabActual = 'buscar', slideActual = 0, totalSlides = 8, touchX0 = 0;
 
 // ── AUTH ──
@@ -926,32 +887,38 @@ function cambiarTab(tab, btn) {
   tabActual = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  ['buscar','negocios','planes','radar','hoy','calc','mapa','argumentos'].forEach(t => {
+  ['buscar','negocios','planes','radar','calc'].forEach(t => {
     const el = document.getElementById('tab-' + t);
     if (el) el.style.display = t === tab ? '' : 'none';
   });
-  if (tab === 'negocios') renderNegocios();
+  if (tab === 'buscar' || tab === 'negocios') renderNegocios();
   if (tab === 'radar') renderRadar();
-  if (tab === 'hoy') renderHoy();
-  if (tab === 'mapa') renderMapa();
-  if (tab === 'argumentos') renderArgumentos();
 }
 
 // ── SCORING ──
 function calcularScore(n) {
-  let s = 0;
-  if (n.oportunidad === 'alta') s += 40;
-  else if (n.oportunidad === 'media') s += 20;
-  if (n.estrellas < 3.5) s += 30;
-  else if (n.estrellas < 4.0) s += 20;
-  else if (n.estrellas < 4.3) s += 10;
-  if (n.resenas < 50) s += 20;
-  else if (n.resenas < 150) s += 10;
-  if (!n.web) s += 10;
-  if (!n.telefono) s += 5;
-  if (n.estado === 'pendiente') s += 15;
-  if (n.estado === 'visitado') s -= 10;
-  return s;
+  // Nuevo algoritmo: (5 - rating) × sqrt(reviewCount)
+  // Bar con 4.0★ y 2000 reseñas = 44.7 (TOP)
+  // Bar con 4.9★ y 50 reseñas = 0.7 (BAJO)
+  const rating = parseFloat(n.estrellas) || 4.5;
+  const reviews = parseInt(n.resenas) || 0;
+  let score = (5 - rating) * Math.sqrt(reviews);
+  // Bonus por datos faltantes
+  if (!n.telefono) score += 5;
+  if (!n.web) score += 8;
+  // Bonus por nunca visto
+  if (!n.lastViewed) score += 20;
+  return Math.round(score * 10) / 10;
+}
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+    Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
 function negociosPriorizados() {
@@ -965,9 +932,11 @@ async function cargarNegocios() {
   try {
     const { data } = await sb.from('negocios').select('*').order('created_at', { ascending: false });
     negocios = data || [];
+    cargarVisto();
     actualizarStats();
     document.getElementById('load-neg').classList.remove('visible');
-    if (tabActual === 'negocios') renderNegocios();
+    renderNegocios();
+    actualizarFiltroZonas();
     cargarListaPresentacion();
   } catch(e) { document.getElementById('load-neg').classList.remove('visible'); }
 }
@@ -991,8 +960,14 @@ async function buscar() {
     const data = await resp.json();
     if (data.status === 'REQUEST_DENIED') throw new Error('Error en la clave de Maps del servidor.');
     if (!data.results?.length) throw new Error('No se encontraron negocios.');
-    const nuevos = data.results.filter(p => !yaConocidos.has(p.place_id));
-    const repetidos = data.results.length - nuevos.length;
+    // Filtrar por radio si viene del mapa
+    let results = data.results;
+    if (window._pickerLat && window._pickerRadioKm) {
+      results = filtrarPorRadio(results, window._pickerLat, window._pickerLng, window._pickerRadioKm);
+      window._pickerLat = null; window._pickerLng = null; window._pickerRadioKm = null;
+    }
+    const nuevos = results.filter(p => !yaConocidos.has(p.place_id));
+    const repetidos = results.length - nuevos.length;
     let guardados = 0;
     const negociosConDetalle = [];
     for (let i = 0; i < Math.min(nuevos.length, 15); i++) {
@@ -1016,7 +991,7 @@ async function buscar() {
       if (!error) guardados++;
     }
     await cargarNegocios();
-    const yaList = data.results.filter(p => yaConocidos.has(p.place_id)).slice(0,5).map(p => ({...analizarPlace(p, zona, {}), _ya:true}));
+    const yaList = results.filter(p => yaConocidos.has(p.place_id)).slice(0,5).map(p => ({...analizarPlace(p, zona, {}), _ya:true}));
     renderBusqueda([...negociosConDetalle.map(n=>({...n,_ya:false})), ...yaList]);
     mostrarMsg(msgEl, repetidos > 0 ? 'info' : 'ok', '✓ ' + guardados + ' nuevos guardados.' + (repetidos > 0 ? ' ' + repetidos + ' ya los tenías.' : ''));
   } catch(err) { mostrarMsg(msgEl, 'error', err.message || 'Error al conectar.'); }
@@ -1092,7 +1067,10 @@ function analizarPlace(p, zona, d = {}) {
 // ── RENDER BÚSQUEDA ──
 function renderBusqueda(lista) {
   const el = document.getElementById('lista-busqueda');
-  if (!lista.length) { el.innerHTML = '<div class="empty"><div class="empty-bot"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g class="bot-sig" stroke="currentColor" fill="none" stroke-linecap="round"><path d="M18 7a8.5 8.5 0 0 1 12 0" stroke-width="1.5" opacity=".5"/><path d="M21 10a4.5 4.5 0 0 1 6 0" stroke-width="1.5" opacity=".8"/></g><line x1="24" y1="12" x2="24" y2="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="10.5" r="2.2" fill="currentColor"/><rect x="9" y="16" width="30" height="24" rx="8" stroke="currentColor" stroke-width="2.2"/><rect x="4.5" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><rect x="39.9" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><g class="bot-eyes" fill="currentColor"><circle cx="18.5" cy="26.5" r="2.5"/><circle cx="29.5" cy="26.5" r="2.5"/></g><path d="M18 33q6 4 12 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div><div class="empty-title">Sin resultados</div></div>'; return; }
+  const sec = document.getElementById('resultados-busqueda');
+  if (!lista.length) { if(sec) sec.style.display='none'; return; }
+  if(sec) sec.style.display='block';
+  if (!el) return;
   el.innerHTML = lista.map((n, i) => card(n, i, true, n._ya)).join('');
 }
 
@@ -1136,7 +1114,25 @@ function card(n, i, esBusqueda, yaGuardado) {
       return chips.length ? '<div class="tags-row">' + chips.map(c=>'<span class="tag" style="background:rgba(41,128,185,.08);color:var(--blue);border-color:rgba(41,128,185,.2)">'+c+'</span>').join('') + '</div>' : '';
     })() +
     (probs.length ? '<div class="tags-row">' + probs.slice(0,4).map(p=>'<span class="tag '+(n.oportunidad==='media'?'amber':'')+'">'+esc(p)+'</span>').join('') + '</div>' : '') +
+    (() => {
+      // Badge "visto hoy" y contador días
+      if (esBusqueda) return '';
+      const lv = n.lastViewed ? new Date(n.lastViewed) : null;
+      const hoy = new Date(); hoy.setHours(0,0,0,0);
+      let badge = '';
+      if (!lv) {
+        badge = '<span style="font-family:\'DM Mono\',monospace;font-size:9px;padding:2px 8px;border-radius:3px;background:rgba(192,57,43,.08);color:var(--red);border:1px solid rgba(192,57,43,.2)">👁️ Nunca visto</span>';
+      } else {
+        const dias = Math.floor((new Date() - lv) / 86400000);
+        if (dias === 0) badge = '<span style="font-family:\'DM Mono\',monospace;font-size:9px;padding:2px 8px;border-radius:3px;background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)">✅ Visto hoy</span>';
+        else if (dias < 7) badge = '<span style="font-family:\'DM Mono\',monospace;font-size:9px;padding:2px 8px;border-radius:3px;background:rgba(196,138,26,.08);color:var(--amber);border:1px solid rgba(196,138,26,.2)">⏰ Hace ' + dias + ' día' + (dias>1?'s':'') + '</span>';
+        else badge = '<span style="font-family:\'DM Mono\',monospace;font-size:9px;padding:2px 8px;border-radius:3px;background:rgba(192,57,43,.08);color:var(--red);border:1px solid rgba(192,57,43,.2)">⚠️ Hace ' + dias + ' días</span>';
+      }
+      return '<div style="margin-bottom:6px">' + badge + '</div>';
+    })() +
+    (!esBusqueda ? '<div style="margin-bottom:8px"><div id="nota-inline-' + esc(n.id) + '" style="display:none"><textarea id="nota-txt-' + esc(n.id) + '" placeholder="Nota rápida..." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:12px;color:var(--text);font-family:\'Instrument Sans\',sans-serif;resize:none;min-height:60px;outline:none" oninput="notaRapida(\'' + esc(n.id) + '\',this.value)">' + esc(n.notaRapida||n.notas||'') + '</textarea></div>' + (n.notaRapida ? '<div style="font-size:11px;color:var(--muted);background:var(--bg3);border-radius:4px;padding:5px 10px;border-left:2px solid var(--border2);cursor:pointer" onclick="toggleNota(\'' + esc(n.id) + '\')">' + esc((n.notaRapida||'').slice(0,50)) + ((n.notaRapida||'').length>50?'...':'') + '</div>' : '') + '</div>' : '') +
     '<div class="card-footer"><div class="potencial">Potencial <span>' + esc(n.potencial) + '/mes</span></div><div class="card-actions">' +
+    (!esBusqueda ? '<button class="btn btn-ghost btn-sm" onclick="toggleNota(\'' + esc(n.id) + '\');marcarVisto(\'' + esc(n.id) + '\')">📝</button>' : '') +
     (!esBusqueda ? '<button class="btn btn-ghost btn-sm" onclick="abrirDetalle(\'' + esc(n.id) + '\')">✏️ Editar</button>' : '') +
     (n.oportunidad!=='baja'?'<button class="btn btn-ghost btn-sm" onclick="abrirKit(\'' + esc(n.place_id) + '\')">🎯 Kit</button>':'') +
     (!esBusqueda?'<button class="btn btn-ghost btn-sm" onclick="abrirVisitaRapida(\'' + esc(n.id) + '\')">⚡ Visita</button>':'') +
@@ -1147,14 +1143,39 @@ function card(n, i, esBusqueda, yaGuardado) {
 // ── RENDER NEGOCIOS ──
 function renderNegocios() {
   const el = document.getElementById('lista-negocios');
+  if (!el) return;
   let f = negocios;
   if (filtroE !== 'todos') f = f.filter(n => n.estado === filtroE);
   if (filtroO !== 'todos') f = f.filter(n => n.oportunidad === filtroO);
-  // Ordenar por score de prioridad
-  f = [...f].sort((a,b) => calcularScore(b) - calcularScore(a));
-  if (!f.length) { el.innerHTML = '<div class="empty"><div class="empty-bot"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g class="bot-sig" stroke="currentColor" fill="none" stroke-linecap="round"><path d="M18 7a8.5 8.5 0 0 1 12 0" stroke-width="1.5" opacity=".5"/><path d="M21 10a4.5 4.5 0 0 1 6 0" stroke-width="1.5" opacity=".8"/></g><line x1="24" y1="12" x2="24" y2="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="10.5" r="2.2" fill="currentColor"/><rect x="9" y="16" width="30" height="24" rx="8" stroke="currentColor" stroke-width="2.2"/><rect x="4.5" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><rect x="39.9" y="23" width="3.6" height="9" rx="1.8" fill="currentColor"/><g class="bot-eyes" fill="currentColor"><circle cx="18.5" cy="26.5" r="2.5"/><circle cx="29.5" cy="26.5" r="2.5"/></g><path d="M18 33q6 4 12 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div><div class="empty-title">Sin negocios</div></div>'; return; }
+  if (filtroZona !== 'todas') f = f.filter(n => (n.zona||'') === filtroZona);
+
+  // Ordenar
+  if (filtroOrden === 'score') f = [...f].sort((a,b) => calcularScore(b) - calcularScore(a));
+  else if (filtroOrden === 'sin_ver') f = [...f].sort((a,b) => {
+    const av = a.lastViewed ? new Date(a.lastViewed) : new Date(0);
+    const bv = b.lastViewed ? new Date(b.lastViewed) : new Date(0);
+    return av - bv;
+  });
+  else if (filtroOrden === 'nombre') f = [...f].sort((a,b) => (a.nombre||'').localeCompare(b.nombre||''));
+
+  if (!f.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🏪</div><div class="empty-title">Sin negocios</div></div>'; return; }
   el.innerHTML = f.map((n, i) => card(n, i, false, false)).join('');
+
+  // Actualizar dropdown de zonas
+  actualizarFiltroZonas();
 }
+
+function actualizarFiltroZonas() {
+  const sel = document.getElementById('filtro-zona');
+  if (!sel) return;
+  const zonas = [...new Set(negocios.map(n => n.zona).filter(Boolean))].sort();
+  const current = sel.value;
+  sel.innerHTML = '<option value="todas">📍 Todas las zonas</option>' +
+    zonas.map(z => '<option value="' + esc(z) + '"' + (z===current?' selected':'') + '>' + esc(z) + '</option>').join('');
+}
+
+function filtrarZona(v) { filtroZona = v; renderNegocios(); }
+function filtrarOrden(v) { filtroOrden = v; renderNegocios(); }
 
 function actualizarStats() {
   document.getElementById('s-total').textContent = negocios.length;
@@ -1164,7 +1185,11 @@ function actualizarStats() {
   document.getElementById('s-desc').textContent = negocios.filter(n=>n.estado==='descartado').length;
 }
 
-function filtrarE(e) { filtroE = e; renderNegocios(); }
+function filtrarE(e, btn) {
+  filtroE = e;
+  if (btn) { document.querySelectorAll('.filtro').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  renderNegocios();
+}
 function filtrarO(o, btn) { filtroO = o; document.querySelectorAll('.filtro').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderNegocios(); }
 
 // ── DETALLE ──
@@ -1226,7 +1251,7 @@ async function generarGuion() {
   c.style.display='block'; c.innerHTML='<div class="spinner" style="margin:1rem auto"></div>';
   const prompt = 'Coach de ventas digitales en hostelería Costa del Sol. Guión de visita CORTO y NATURAL, máximo 4 frases, directo, sin parecer vendedor.\n\nNegocio: '+n.nombre+' ('+n.tipo+')\nEstrellas: '+n.estrellas+' | Reseñas: '+n.resenas+'\nProblemas: '+parse(n.problemas).join(', ')+(n.nombre_dueno?'\nDueño: '+n.nombre_dueno:'')+(n.notas?'\nHistorial: '+n.notas:'\nPrimera visita.')+'\n\nSOLO el texto del guión.';
   try {
-    const resp = await fetch(AI_PROXY,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
+    const resp = await fetch(AI_PROXY,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:300,messages:[{role:'user',content:prompt}]})});
     const data = await resp.json();
     c.innerHTML = '<div style="font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Guión de visita</div><div class="guion-box">'+data.content.map(i=>i.text||'').join('')+'</div>';
   } catch(e) { c.innerHTML='<div style="font-size:12px;color:var(--muted)">Error al generar.</div>'; }
@@ -1245,7 +1270,7 @@ async function abrirKit(placeId) {
   const probs = parse(n.problemas);
   const prompt = 'Consultor digital hostelería Costa del Sol. JSON exacto sin texto extra:\n{"resumen":"2-3 frases","argumentos":["a1","a2","a3"],"intro_visita":"2-3 frases naturales","servicios_recomendados":["s1","s2","s3"],"precio_sugerido":"€/mes","post":{"titulo":"max 4 palabras","subtitulo":"max 8 palabras","caption":"con emojis y hashtags","emoji":"emoji","color_fondo":"hex","color_acento":"hex","ubicacion":"zona"}}\n\nNegocio: '+n.nombre+' | '+n.tipo+'\nEstrellas: '+n.estrellas+' | Reseñas: '+n.resenas+'\nProblemas: '+probs.join(', ')+'\nPotencial: '+n.potencial+'/mes';
   try {
-    const resp = await fetch(AI_PROXY,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const resp = await fetch(AI_PROXY,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
     const data = await resp.json();
     const kit = JSON.parse(data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim());
     const p = kit.post;
@@ -1380,7 +1405,7 @@ async function generarPresentacionIA(negOSource) {
 
   let kit;
   try {
-    const resp=await fetch(AI_PROXY,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
+    const resp=await fetch(AI_PROXY,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
     const data=await resp.json();
     kit=JSON.parse(data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim());
   } catch(e) {
@@ -1501,10 +1526,10 @@ function construirSlidesPres(n, k) {
       '<div style="font-family:\'DM Mono\',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:1.5rem">Sin permanencia · Cancelable · Resultados en 48h</div>'+
       '<div class="qr-wrap">'+generarQR('https://wa.me/34'+('673708803')+'?text='+encodeURIComponent('Hola, me interesa el Pack Digital para '+n.nombre+'. ¿Cuándo podemos empezar?'), 110)+'</div>'+
       '<div style="font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.2);margin-bottom:1.25rem">Escanea para contactar</div>'+
-      '<button class="btn-wa" onclick="abrirWhatsApp(\''+esc(n.nombre)+'\')">'+
+      '<a class="btn-wa" href="' + 'https://wa.me/?text=' + encodeURIComponent('¡Hola! 👋 Soy Marcos, el consultor digital con el que acabas de hablar.\n\nTe mando un resumen de lo que vimos para *' + n.nombre + '*:\n\n✅ Gestión Google Business\n✅ Instagram automatizado\n✅ Reseñas respondidas con IA\n✅ Informe mensual\n\n💰 Todo por 199€/mes — sin permanencia, cancelable cuando quieras.\n\n¿Empezamos esta semana?') + '" target="_blank" style="text-decoration:none">'+
         '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>'+
         'Enviar resumen por WhatsApp'+
-      '</button>'+
+      '</a>'+
     '</div>'
   ];
 
@@ -1681,6 +1706,89 @@ function renderArgumentos() {
 }
 
 
+// ── VISTO HOY ──
+function marcarVisto(id) {
+  const n = negocios.find(x=>x.id===id); if (!n) return;
+  n.lastViewed = new Date().toISOString();
+  const visto = JSON.parse(localStorage.getItem('hb_visto')||'{}');
+  visto[id] = n.lastViewed;
+  localStorage.setItem('hb_visto', JSON.stringify(visto));
+}
+
+function cargarVisto() {
+  const visto = JSON.parse(localStorage.getItem('hb_visto')||'{}');
+  negocios.forEach(n => { if (visto[n.id]) n.lastViewed = visto[n.id]; });
+}
+
+// ── NOTA RÁPIDA INLINE ──
+function toggleNota(id) {
+  const el = document.getElementById('nota-inline-' + id);
+  if (!el) return;
+  const visible = el.style.display !== 'none';
+  el.style.display = visible ? 'none' : 'block';
+  if (!visible) { document.getElementById('nota-txt-' + id)?.focus(); marcarVisto(id); }
+}
+
+function notaRapida(id, valor) {
+  if (notasDebounce[id]) clearTimeout(notasDebounce[id]);
+  notasDebounce[id] = setTimeout(async () => {
+    const n = negocios.find(x=>x.id===id); if (!n) return;
+    n.notaRapida = valor;
+    await sb.from('negocios').update({ notas: valor, updated_at: new Date().toISOString() }).eq('id', id);
+  }, 300);
+}
+
+// ── EXPORTAR ──
+function exportarDatos() {
+  const popup = document.createElement('div');
+  popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:1.5rem;z-index:1000;min-width:260px;text-align:center';
+  popup.innerHTML = '<div style="font-family:\'DM Mono\',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:1rem">Exportar negocios</div>' +
+    '<div style="display:flex;gap:8px;justify-content:center">' +
+    '<button class="btn btn-primary" onclick="exportarExcel();this.closest(\'div\').parentElement.remove()">📊 Excel</button>' +
+    '<button class="btn btn-ghost" onclick="exportarCSV();this.closest(\'div\').parentElement.remove()">📄 CSV</button>' +
+    '<button class="btn btn-ghost" onclick="this.closest(\'div\').parentElement.remove()">✕</button>' +
+    '</div>';
+  document.body.appendChild(popup);
+}
+
+function exportarCSV() {
+  const cols = ['Nombre','Zona','Tipo','Estrellas','Reseñas','Estado','Teléfono','Web','Potencial','Notas'];
+  const rows = negocios.map(n => [
+    n.nombre, n.zona, n.tipo, n.estrellas, n.resenas, n.estado,
+    n.telefono||'', n.web?'Sí':'No', n.potencial, (n.notas||'').replace(/,/g,';')
+  ]);
+  const csv = [cols, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'hostelbot-' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
+}
+
+function exportarExcel() {
+  const cols = ['Nombre','Zona','Tipo','Estrellas','Reseñas','Estado','Teléfono','Web','Potencial/mes','Notas'];
+  const rows = negocios.map(n => [n.nombre,n.zona,n.tipo,n.estrellas,n.resenas,n.estado,n.telefono||'—',n.web?'Sí':'No',n.potencial,n.notas||'']);
+  let html = '<table border="1"><tr>'+cols.map(c=>'<th style="background:#B8965A;color:white">'+c+'</th>').join('')+'</tr>';
+  rows.forEach(r=>{html+='<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>';});
+  html+='</table>';
+  const blob = new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'hostelbot-' + new Date().toISOString().slice(0,10) + '.xls'; a.click();
+}
+
+// ── HAVERSINE RADIO FILTER ──
+function haversineKm(lat1,lon1,lat2,lon2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function filtrarPorRadio(results, lat, lng, radioKm) {
+  return results.filter(p => {
+    const plat = p.geometry?.location?.lat, plng = p.geometry?.location?.lng;
+    if (!plat || !plng) return true;
+    return haversineKm(lat, lng, plat, plng) <= radioKm;
+  });
+}
+
 function abrirWhatsApp(nombreNegocio) {
   const msg = '¡Hola! 👋 Soy Marcos, el consultor digital con el que acabas de hablar.\n\nTe mando un resumen de lo que vimos para *' + nombreNegocio + '*:\n\n✅ Gestión Google Business\n✅ Instagram automatizado\n✅ Reseñas respondidas con IA\n✅ Informe mensual\n\n💰 Todo por 199€/mes — sin permanencia, cancelable cuando quieras.\n\n¿Empezamos esta semana?';
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
@@ -1763,15 +1871,22 @@ function initPickerMap() {
 
 async function onPickerClick(e) {
   const lat = e.latlng.lat, lng = e.latlng.lng;
+  const radio = parseInt(document.getElementById('picker-radio').value) || 700;
   if (pickerDot) pickerDot.setLatLng(e.latlng);
   else pickerDot = L.circleMarker(e.latlng, { radius: 8, color: '#F0D9A8', weight: 2, fillColor: '#B8965A', fillOpacity: .7 }).addTo(pickerMap);
-  if (pickerCircle) pickerCircle.setLatLng(e.latlng);
-  else pickerCircle = L.circle(e.latlng, { radius: 700, color: '#F0D9A8', weight: 1, fillColor: '#F0D9A8', fillOpacity: .06 }).addTo(pickerMap);
+  if (pickerCircle) { pickerCircle.setLatLng(e.latlng); pickerCircle.setRadius(radio); }
+  else pickerCircle = L.circle(e.latlng, { radius: radio, color: '#F0D9A8', weight: 1, fillColor: '#F0D9A8', fillOpacity: .06 }).addTo(pickerMap);
   document.getElementById('picker-zona').textContent = 'Buscando nombre de la zona...';
   document.getElementById('btn-picker-buscar').disabled = true;
   pickerZona = await reverseGeocode(lat, lng);
   document.getElementById('picker-zona').textContent = pickerZona;
   document.getElementById('btn-picker-buscar').disabled = false;
+}
+
+function actualizarRadio(val) {
+  const metros = parseInt(val);
+  document.getElementById('radio-label').textContent = metros >= 1000 ? (metros/1000).toFixed(1) + ' km' : metros + ' m';
+  if (pickerCircle) pickerCircle.setRadius(metros);
 }
 
 async function reverseGeocode(lat, lng) {
@@ -1790,6 +1905,13 @@ function buscarDesdeMapa() {
   if (!pickerZona) return;
   document.getElementById('zona').value = pickerZona;
   document.getElementById('tipo').value = document.getElementById('picker-tipo').value;
+  // Guardar coords y radio para filtrar después
+  if (pickerDot) {
+    const ll = pickerDot.getLatLng();
+    window._pickerLat = ll.lat;
+    window._pickerLng = ll.lng;
+    window._pickerRadioKm = (parseInt(document.getElementById('picker-radio').value)||700) / 1000;
+  }
   cerrarModal('modal-mapa');
   buscar();
 }
