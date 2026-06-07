@@ -1007,7 +1007,8 @@ async function buscar() {
           body: JSON.stringify({ place_id: place.place_id })
         });
         const dd = await dr.json();
-        if (dd.result) detalles = dd.result;
+        if (dd.nationalPhoneNumber || dd.websiteUri || dd.outdoorSeating !== undefined) detalles = dd;
+        else if (dd.result) detalles = dd.result;
       } catch(e) { /* si falla, continúa sin detalles */ }
       const neg = analizarPlace(place, zona, detalles);
       negociosConDetalle.push(neg);
