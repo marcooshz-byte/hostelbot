@@ -951,7 +951,7 @@ async function buscar() {
   msgEl.style.display = 'none';
   if (!zona) return mostrarMsg(msgEl, 'error', 'Introduce una zona.');
   const yaConocidos = new Set(negocios.filter(n => n.zona && n.zona.toLowerCase() === zona.toLowerCase()).map(n => n.place_id));
-  setLoading(true, 'Buscando en Google Maps...');
+  setLoading(true, '🔍 Buscando en Google Maps...');
   document.getElementById('lista-busqueda').innerHTML = '';
   try {
     const resp = await fetch(AI_PROXY + '/maps', {
@@ -965,25 +965,47 @@ async function buscar() {
     const nuevos = data.results.filter(p => !yaConocidos.has(p.place_id));
     const repetidos = data.results.length - nuevos.length;
     let guardados = 0;
-    for (const place of nuevos.slice(0, 15)) {
-      const neg = analizarPlace(place, zona);
+    const negociosConDetalle = [];
+    for (let i = 0; i < Math.min(nuevos.length, 15); i++) {
+      const place = nuevos[i];
+      setLoading(true, '📋 Obteniendo detalles ' + (i+1) + '/' + Math.min(nuevos.length, 15) + '...');
+      // Llamada a Place Details
+      let detalles = {};
+      try {
+        const dr = await fetch(AI_PROXY + '/place-details', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SB_KEY },
+          body: JSON.stringify({ place_id: place.place_id })
+        });
+        const dd = await dr.json();
+        if (dd.result) detalles = dd.result;
+      } catch(e) { /* si falla, continúa sin detalles */ }
+      const neg = analizarPlace(place, zona, detalles);
+      negociosConDetalle.push(neg);
       const { error } = await sb.from('negocios').upsert(neg, { onConflict: 'place_id' });
       if (!error) guardados++;
     }
     await cargarNegocios();
-    const todos = data.results.slice(0, 15).map(p => ({ ...analizarPlace(p, zona), _ya: yaConocidos.has(p.place_id) }));
-    renderBusqueda(todos);
+    const yaList = data.results.filter(p => yaConocidos.has(p.place_id)).slice(0,5).map(p => ({...analizarPlace(p, zona, {}), _ya:true}));
+    renderBusqueda([...negociosConDetalle.map(n=>({...n,_ya:false})), ...yaList]);
     mostrarMsg(msgEl, repetidos > 0 ? 'info' : 'ok', '✓ ' + guardados + ' nuevos guardados.' + (repetidos > 0 ? ' ' + repetidos + ' ya los tenías.' : ''));
   } catch(err) { mostrarMsg(msgEl, 'error', err.message || 'Error al conectar.'); }
   finally { setLoading(false); }
 }
 
-function analizarPlace(p, zona) {
+function analizarPlace(p, zona, d = {}) {
   const e = p.rating || 0, r = p.user_ratings_total || 0;
   const probs = []; let pts = 0;
 
+  const telefono = d.formatted_phone_number || p.formatted_phone_number || '';
+  const web = !!(d.website || p.website);
+  const horario = d.opening_hours || p.opening_hours;
+  const nFotos = p.photos ? p.photos.length : 0;
+
   // Google Business
-  if (!p.opening_hours) { probs.push('Horario no actualizado en Google'); pts += 2; }
+  if (!telefono) { probs.push('Sin teléfono en Google'); pts += 1; }
+  if (!web) { probs.push('Sin página web'); pts += 2; }
+  if (!horario) { probs.push('Horario no actualizado en Google'); pts += 2; }
 
   // Reseñas
   if (e < 3.5) { probs.push('Nota crítica en Google (' + e + '★)'); pts += 3; }
@@ -994,12 +1016,23 @@ function analizarPlace(p, zona) {
   else if (r < 300) { probs.push('Reseñas por debajo de competidores'); pts += 1; }
 
   // Fotos
-  const nFotos = p.photos ? p.photos.length : 0;
   if (nFotos < 3) { probs.push('Sin fotos en Google Business'); pts += 2; }
   else if (nFotos < 8) { probs.push('Pocas fotos en Google (' + nFotos + ')'); pts += 1; }
 
-  // Problemas fijos del sector hostelero
-  probs.push('Reseñas sin responder');  pts += 2;
+  // Atributos de Place Details
+  const atributos = {};
+  if (d.outdoor_seating !== undefined) atributos.terraza = d.outdoor_seating;
+  if (d.delivery !== undefined) atributos.delivery = d.delivery;
+  if (d.takeout !== undefined) atributos.takeout = d.takeout;
+  if (d.reservable !== undefined) atributos.reservas = d.reservable;
+  if (d.serves_vegetarian_food !== undefined) atributos.vegetariano = d.serves_vegetarian_food;
+  if (d.live_music !== undefined) atributos.musica_en_vivo = d.live_music;
+  if (d.good_for_groups !== undefined) atributos.grupos = d.good_for_groups;
+  if (d.wheelchair_accessible_entrance !== undefined) atributos.accesible = d.wheelchair_accessible_entrance;
+  if (d.price_level !== undefined) atributos.precio_nivel = d.price_level;
+
+  // Problemas fijos del sector
+  probs.push('Reseñas sin responder'); pts += 2;
   probs.push('Sin sistema de fichaje digital'); pts += 1;
   probs.push('Sin base de datos de clientes'); pts += 1;
   probs.push('Sin estrategia en Instagram'); pts += 1;
@@ -1016,10 +1049,11 @@ function analizarPlace(p, zona) {
     estrellas: e,
     resenas: r,
     direccion: p.formatted_address || '',
-    telefono: p.formatted_phone_number || '',
-    web: !!p.website,
-    horario: p.opening_hours ? JSON.stringify(p.opening_hours) : null,
-    fotos: p.photos ? p.photos.length : 0,
+    telefono,
+    web,
+    horario: horario ? JSON.stringify(horario) : null,
+    fotos: nFotos,
+    atributos: JSON.stringify(atributos),
     problemas: JSON.stringify(probs),
     oportunidad: op,
     potencial: potMin + '–' + potMax + '€',
@@ -1055,8 +1089,22 @@ function card(n, i, esBusqueda, yaGuardado) {
       '<div class="metrica">⭐ <strong>' + esc(n.estrellas) + '</strong></div>' +
       '<div class="metrica">💬 <strong>' + esc(n.resenas) + '</strong> reseñas</div>' +
       (n.fotos > 0 ? '<div class="metrica">📸 <strong>' + n.fotos + '</strong> fotos</div>' : '<div class="metrica" style="color:var(--red)">📸 Sin fotos</div>') +
+      (n.telefono ? '<div class="metrica">📞 <strong>' + esc(n.telefono) + '</strong></div>' : '<div class="metrica" style="color:var(--red)">📞 Sin tel.</div>') +
+      (n.web ? '<div class="metrica" style="color:var(--green)">🌐 Tiene web</div>' : '<div class="metrica" style="color:var(--red)">🌐 Sin web</div>') +
       (n.nombre_dueno?'<div class="metrica">👤 <strong>'+esc(n.nombre_dueno)+'</strong></div>':'') +
     '</div>' +
+    (() => {
+      const attrs = parse(n.atributos || '{}');
+      const chips = [];
+      if (attrs.terraza) chips.push('🌿 Terraza');
+      if (attrs.delivery) chips.push('🛵 Delivery');
+      if (attrs.reservas) chips.push('📅 Reservas');
+      if (attrs.musica_en_vivo) chips.push('🎵 Música en vivo');
+      if (attrs.vegetariano) chips.push('🥗 Vegetariano');
+      if (attrs.accesible) chips.push('♿ Accesible');
+      if (attrs.grupos) chips.push('👥 Grupos');
+      return chips.length ? '<div class="tags-row">' + chips.map(c=>'<span class="tag" style="background:rgba(41,128,185,.08);color:var(--blue);border-color:rgba(41,128,185,.2)">'+c+'</span>').join('') + '</div>' : '';
+    })() +
     (probs.length ? '<div class="tags-row">' + probs.slice(0,4).map(p=>'<span class="tag '+(n.oportunidad==='media'?'amber':'')+'">'+esc(p)+'</span>').join('') + '</div>' : '') +
     '<div class="card-footer"><div class="potencial">Potencial <span>' + esc(n.potencial) + '/mes</span></div><div class="card-actions">' +
     (!esBusqueda ? '<button class="btn btn-ghost btn-sm" onclick="abrirDetalle(\'' + esc(n.id) + '\')">✏️ Editar</button>' : '') +
