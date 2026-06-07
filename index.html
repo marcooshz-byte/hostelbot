@@ -802,6 +802,35 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
       <div class="psel-manual"><label>Estrellas Google</label><input type="number" id="pm-stars" placeholder="3.8" min="1" max="5" step="0.1"></div>
     </div>
     <div class="psel-manual"><label>Nº reseñas</label><input type="number" id="pm-resenas" placeholder="47"></div>
+
+    <div style="width:100%;max-width:420px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:1rem;margin-top:.5rem">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(184,150,90,.6);margin-bottom:1rem">💬 Preguntas al dueño</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="psel-manual"><label>💰 Ticket medio (€)</label><input type="number" id="pq-ticket" placeholder="25" min="1"></div>
+        <div class="psel-manual"><label>👥 Clientes por semana</label><input type="number" id="pq-clientes" placeholder="150" min="1"></div>
+      </div>
+
+      <div class="psel-manual" style="margin-bottom:8px">
+        <label>📱 ¿Alguien gestiona sus redes o Google?</label>
+        <select id="pq-gestion" style="width:100%;background:transparent;border:none;outline:none;font-size:13px;color:#E8E3DB;font-family:'Instrument Sans',sans-serif;margin-top:4px">
+          <option value="nadie">Nadie, lo lleva él mismo o abandonado</option>
+          <option value="el_mismo">Lo intenta él mismo sin estrategia</option>
+          <option value="agencia">Tiene una agencia o freelance</option>
+        </select>
+      </div>
+
+      <div class="psel-manual" style="margin-bottom:8px">
+        <label>🎯 Su mayor problema ahora mismo</label>
+        <input type="text" id="pq-problema" placeholder="Poca gente, competencia, temporada baja...">
+      </div>
+
+      <div class="psel-manual">
+        <label>📣 Gasto mensual en publicidad (€)</label>
+        <input type="number" id="pq-publicidad" placeholder="0" min="0">
+      </div>
+    </div>
+
     <button class="btn-generar-pres" id="btn-gen-pres" onclick="generarPresentacionIA(null)" disabled>✦ Generar presentación</button>
     <div id="pres-status">Cargando negocios...</div>
   </div>
@@ -997,9 +1026,9 @@ function analizarPlace(p, zona, d = {}) {
   const e = p.rating || 0, r = p.user_ratings_total || 0;
   const probs = []; let pts = 0;
 
-  const telefono = d.formatted_phone_number || p.formatted_phone_number || '';
-  const web = !!(d.website || p.website);
-  const horario = d.opening_hours || p.opening_hours;
+  const telefono = d.nationalPhoneNumber || d.formatted_phone_number || p.formatted_phone_number || '';
+  const web = !!(d.websiteUri || d.website || p.website);
+  const horario = d.regularOpeningHours || d.opening_hours || p.opening_hours;
   const nFotos = p.photos ? p.photos.length : 0;
 
   // Google Business
@@ -1021,23 +1050,20 @@ function analizarPlace(p, zona, d = {}) {
 
   // Atributos de Place Details
   const atributos = {};
-  if (d.outdoor_seating !== undefined) atributos.terraza = d.outdoor_seating;
+  if (d.outdoorSeating !== undefined) atributos.terraza = d.outdoorSeating;
   if (d.delivery !== undefined) atributos.delivery = d.delivery;
   if (d.takeout !== undefined) atributos.takeout = d.takeout;
   if (d.reservable !== undefined) atributos.reservas = d.reservable;
-  if (d.serves_vegetarian_food !== undefined) atributos.vegetariano = d.serves_vegetarian_food;
-  if (d.live_music !== undefined) atributos.musica_en_vivo = d.live_music;
-  if (d.good_for_groups !== undefined) atributos.grupos = d.good_for_groups;
-  if (d.wheelchair_accessible_entrance !== undefined) atributos.accesible = d.wheelchair_accessible_entrance;
-  if (d.price_level !== undefined) atributos.precio_nivel = d.price_level;
+  if (d.servesVegetarianFood !== undefined) atributos.vegetariano = d.servesVegetarianFood;
+  if (d.liveMusic !== undefined) atributos.musica_en_vivo = d.liveMusic;
+  if (d.goodForGroups !== undefined) atributos.grupos = d.goodForGroups;
+  if (d.wheelchairAccessibleEntrance !== undefined) atributos.accesible = d.wheelchairAccessibleEntrance;
+  if (d.servesBeer !== undefined) atributos.cerveza = d.servesBeer;
+  if (d.servesWine !== undefined) atributos.vino = d.servesWine;
+  if (d.dineIn !== undefined) atributos.en_local = d.dineIn;
 
-  // Problemas fijos del sector
-  probs.push('Reseñas sin responder'); pts += 2;
-  probs.push('Sin sistema de fichaje digital'); pts += 1;
-  probs.push('Sin base de datos de clientes'); pts += 1;
-  probs.push('Sin estrategia en Instagram'); pts += 1;
 
-  const op = pts >= 8 ? 'alta' : pts >= 4 ? 'media' : 'baja';
+  const op = pts >= 6 ? 'alta' : pts >= 3 ? 'media' : 'baja';
   const potMin = op==='alta'?300:op==='media'?150:50;
   const potMax = op==='alta'?500:op==='media'?300:150;
 
@@ -1103,6 +1129,9 @@ function card(n, i, esBusqueda, yaGuardado) {
       if (attrs.vegetariano) chips.push('🥗 Vegetariano');
       if (attrs.accesible) chips.push('♿ Accesible');
       if (attrs.grupos) chips.push('👥 Grupos');
+      if (attrs.cerveza) chips.push('🍺 Cerveza');
+      if (attrs.vino) chips.push('🍷 Vino');
+      if (attrs.en_local) chips.push('🍽️ Come en local');
       return chips.length ? '<div class="tags-row">' + chips.map(c=>'<span class="tag" style="background:rgba(41,128,185,.08);color:var(--blue);border-color:rgba(41,128,185,.2)">'+c+'</span>').join('') + '</div>' : '';
     })() +
     (probs.length ? '<div class="tags-row">' + probs.slice(0,4).map(p=>'<span class="tag '+(n.oportunidad==='media'?'amber':'')+'">'+esc(p)+'</span>').join('') + '</div>' : '') +
@@ -1321,16 +1350,32 @@ async function generarPresentacionIA(negOSource) {
     const probs=[];
     if(estrellas<4.0) probs.push(estrellas+'★ en Google');
     if(resenas<100) probs.push('Pocas reseñas');
-    probs.push('Instagram sin gestión'); probs.push('Sin reseñas respondidas');
     neg={nombre,tipo,estrellas,resenas,potencial:'200–400€',oportunidad:'alta',problemas:JSON.stringify(probs)};
   }
+
+  // Leer preguntas del dueño
+  const pqTicket = parseFloat(document.getElementById('pq-ticket').value) || null;
+  const pqClientes = parseInt(document.getElementById('pq-clientes').value) || null;
+  const pqGestion = document.getElementById('pq-gestion').value;
+  const pqProblema = document.getElementById('pq-problema').value.trim();
+  const pqPublicidad = parseFloat(document.getElementById('pq-publicidad').value) || 0;
 
   document.getElementById('pres-selector').classList.add('hidden');
   document.getElementById('pres-loading').classList.add('visible');
   document.getElementById('pres-loading-txt').textContent='Generando presentación...';
 
   const probs=parse(neg.problemas);
-  const prompt='Experto en ventas digitales hostelería Costa del Sol. JSON exacto sin texto:\n{"perdida_mensual":2400,"clientes_perdidos":48,"ticket_medio":50,"competidores":[{"nombre":"nombre creíble zona","estrellas":"4.6","resenas":342,"instagram":"3.2k","gana":"ventaja concreta"},{"nombre":"otro nombre","estrellas":"4.4","resenas":218,"instagram":"1.8k","gana":"otra ventaja"}],"servicios":[{"nombre":"servicio urgente","descripcion":"6 palabras max","plazo":"48h"},{"nombre":"servicio 2","descripcion":"6 palabras","plazo":"1 semana"},{"nombre":"servicio 3","descripcion":"6 palabras","plazo":"mes 1"}],"post":{"titulo":"max 4 palabras","subtitulo":"max 8 palabras","caption":"caption con emojis y hashtags zona","emoji":"emoji","color_fondo":"hex oscuro","color_acento":"hex cálido","ubicacion":"zona"},"precio":299,"precio_items":["item 1","item 2","item 3","item 4"]}\n\nNegocio: '+neg.nombre+'\nTipo: '+neg.tipo+'\nEstrellas: '+neg.estrellas+' | Reseñas: '+neg.resenas+'\nProblemas: '+probs.join(', ');
+
+  // Contexto extra del dueño para el prompt
+  const contextoCliente = [
+    pqTicket ? 'Ticket medio real: ' + pqTicket + '€' : '',
+    pqClientes ? 'Clientes reales por semana: ' + pqClientes : '',
+    'Gestión actual: ' + ({nadie:'Nadie gestiona sus redes ni Google',el_mismo:'Lo intenta él mismo sin estrategia',agencia:'Ya tiene agencia o freelance'}[pqGestion]||''),
+    pqProblema ? 'Su mayor problema: ' + pqProblema : '',
+    pqPublicidad > 0 ? 'Gasto actual en publicidad: ' + pqPublicidad + '€/mes' : 'No gasta en publicidad',
+  ].filter(Boolean).join('\n');
+
+  const prompt='Experto en ventas digitales hostelería Costa del Sol. JSON exacto sin texto:\n{"perdida_mensual":2400,"clientes_perdidos":48,"ticket_medio":50,"competidores":[{"nombre":"nombre creíble zona","estrellas":"4.6","resenas":342,"instagram":"3.2k","gana":"ventaja concreta"},{"nombre":"otro nombre","estrellas":"4.4","resenas":218,"instagram":"1.8k","gana":"otra ventaja"}],"servicios":[{"nombre":"servicio urgente","descripcion":"6 palabras max","plazo":"48h"},{"nombre":"servicio 2","descripcion":"6 palabras","plazo":"1 semana"},{"nombre":"servicio 3","descripcion":"6 palabras","plazo":"mes 1"}],"post":{"titulo":"max 4 palabras","subtitulo":"max 8 palabras","caption":"caption con emojis y hashtags zona","emoji":"emoji","color_fondo":"hex oscuro","color_acento":"hex cálido","ubicacion":"zona"},"precio":299,"precio_items":["item 1","item 2","item 3","item 4"]}\n\nNegocio: '+neg.nombre+'\nTipo: '+neg.tipo+'\nEstrellas: '+neg.estrellas+' | Reseñas: '+neg.resenas+'\nProblemas detectados: '+probs.join(', ')+'\n\nDAtos reales del dueño:\n'+contextoCliente+'\n\nUSA los datos reales del dueño para calcular pérdidas y personalizar el discurso. Si tiene ticket y clientes reales, úsalos en perdida_mensual y ticket_medio.';
 
   let kit;
   try {
@@ -1385,7 +1430,7 @@ function construirSlidesPres(n, k) {
       '<div class="pierde-sub">en clientes que van a la competencia</div>'+
       '<div class="pierde-grid">'+
         '<div class="pierde-card"><div class="pc-val">'+(k.clientes_perdidos||0)+'</div><div class="pc-lbl">Clientes perdidos al mes</div></div>'+
-        '<div class="pierde-card"><div class="pc-val">'+(k.ticket_medio||0)+'€</div><div class="pc-lbl">Ticket medio estimado</div></div>'+
+        '<div class="pierde-card"><div class="pc-val">'+(k.ticket_medio||0)+'€</div><div class="pc-lbl">Ticket medio del local</div></div>'+
       '</div>'+
     '</div>',
 
